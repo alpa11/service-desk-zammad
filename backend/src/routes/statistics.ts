@@ -12,7 +12,7 @@ router.get('/', authorize('admin'), statisticsController.getStatistics);
 // Get personal dashboard (housekeeper, technician)
 router.get(
   '/my-dashboard',
-  authorize('housekeeper', 'technician'),
+  authorize('housekeeper', 'technician', 'admin'),
   statisticsController.getMyDashboard
 );
 
