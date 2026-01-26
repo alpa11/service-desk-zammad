@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import type { SignOptions } from 'jsonwebtoken';
 import { query } from '../config/database';
 import { authConfig } from '../config/auth';
 import { User, JwtPayload } from '../types';
@@ -35,7 +36,7 @@ export const authService = {
     };
 
     const token = jwt.sign(payload, authConfig.jwtSecret, {
-      expiresIn: authConfig.jwtExpiry,
+      expiresIn: authConfig.jwtExpiry as SignOptions['expiresIn'],
     });
 
     const expiresAt = new Date();
