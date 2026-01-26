@@ -4,13 +4,14 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install
 
 # Copy source
 COPY . .
 
 # Build TypeScript
 RUN npm run build
+RUN npm prune --omit=dev
 
 # Create uploads directory
 RUN mkdir -p uploads
