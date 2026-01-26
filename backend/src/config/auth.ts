@@ -1,10 +1,15 @@
 import dotenv from 'dotenv';
+import type { SignOptions } from 'jsonwebtoken';
 
 dotenv.config();
 
+const jwtExpiry: SignOptions['expiresIn'] = process.env.JWT_EXPIRY
+  ? (process.env.JWT_EXPIRY as SignOptions['expiresIn'])
+  : '24h';
+
 export const authConfig = {
   jwtSecret: process.env.JWT_SECRET || 'default-secret-change-me',
-  jwtExpiry: process.env.JWT_EXPIRY || '24h',
+  jwtExpiry,
   saltRounds: 12,
   cookieOptions: {
     httpOnly: true,
