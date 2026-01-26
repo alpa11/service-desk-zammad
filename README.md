@@ -17,6 +17,105 @@
 - אפס בלבול למשתמשים
 - To-Do קודם ל-Helpdesk
 
+## התחלה מהירה
+
+### הרצה עם Docker (מומלץ)
+
+```bash
+# Clone
+git clone <repo-url>
+cd service-desk-zammad
+
+# Copy environment file
+cp .env.example .env
+
+# Run with Docker Compose
+docker-compose up -d
+
+# Access the app at http://localhost
+```
+
+### פיתוח מקומי
+
+```bash
+# Start database
+docker-compose -f docker-compose.dev.yml up -d
+
+# Backend
+cd backend
+cp ../.env.example .env
+npm install
+npm run migrate
+npm run seed
+npm run dev
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+### משתמשי בדיקה
+
+| אימייל | סיסמה | תפקיד |
+|--------|-------|-------|
+| admin@example.com | Admin123! | מנהל |
+| yaakov@example.com | Test1234! | אב בית |
+| sarah@example.com | Test1234! | מזכירה |
+
+## מבנה הפרויקט
+
+```
+service-desk-zammad/
+├── backend/              # Node.js + Express API
+│   ├── src/
+│   │   ├── config/      # Database & auth config
+│   │   ├── controllers/ # Request handlers
+│   │   ├── middleware/  # Auth, validation
+│   │   ├── routes/      # API routes
+│   │   ├── services/    # Business logic
+│   │   ├── types/       # TypeScript types
+│   │   └── utils/       # Helpers
+│   └── Dockerfile
+├── frontend/             # React + Vite app
+│   ├── src/
+│   │   ├── api/         # API client
+│   │   ├── components/  # React components
+│   │   ├── context/     # React context
+│   │   ├── hooks/       # Custom hooks
+│   │   ├── pages/       # Page components
+│   │   ├── styles/      # CSS
+│   │   └── types/       # TypeScript types
+│   └── Dockerfile
+├── database/
+│   └── migrations/       # SQL migrations
+├── docs/                 # Documentation
+├── docker-compose.yml    # Production config
+└── docker-compose.dev.yml # Development config
+```
+
+## טכנולוגיות
+
+| רכיב | טכנולוגיה |
+|------|-----------|
+| Frontend | React 18 + Vite + TypeScript + Tailwind CSS |
+| Backend | Node.js + Express + TypeScript |
+| Database | PostgreSQL 16 |
+| Auth | JWT + bcrypt |
+| Deploy | Docker Compose |
+
+## API Endpoints
+
+| Method | Endpoint | תיאור |
+|--------|----------|-------|
+| POST | /api/v1/auth/login | התחברות |
+| GET | /api/v1/auth/me | פרטי משתמש |
+| GET | /api/v1/tickets | רשימת קריאות |
+| POST | /api/v1/tickets | יצירת קריאה |
+| PATCH | /api/v1/tickets/:id/status | עדכון סטטוס |
+| GET | /api/v1/branches | רשימת סניפים |
+| GET | /api/v1/issue-types | סוגי תקלות |
+
 ## מסמכי אפיון
 
 | מסמך | תיאור |
@@ -26,58 +125,6 @@
 | [API_SPECIFICATION.md](docs/API_SPECIFICATION.md) | מפרט ה-API |
 | [UI_UX_DESIGN.md](docs/UI_UX_DESIGN.md) | עיצוב ממשק המשתמש |
 | [TECHNOLOGY_STACK.md](docs/TECHNOLOGY_STACK.md) | בחירת טכנולוגיות |
-
-## סוגי משתמשים
-
-| תפקיד | תיאור | הרשאות עיקריות |
-|-------|-------|----------------|
-| מזכירה | פותחת קריאות | פתיחת קריאה, צפייה בקריאות שלה |
-| אב בית | מטפל ראשי | שינוי סטטוס, העלאת תמונה |
-| טכנאי | מטפל משני | כמו אב בית, תחת קבוצה |
-| מנהל | Admin | כל ההרשאות |
-
-## סטטוסים
-
-```
-פתוח  →  בטיפול  →  סגור
-```
-
-זה הכל. אין סטטוסים נוספים.
-
-## טכנולוגיות מומלצות
-
-- **Frontend:** React + Vite + Tailwind CSS
-- **Backend:** Node.js + Express + TypeScript
-- **Database:** PostgreSQL
-- **Deploy:** Docker Compose
-
-## מבנה הפרויקט
-
-```
-service-desk-zammad/
-├── docs/                    # מסמכי אפיון
-│   ├── PRD.md              # אפיון פונקציונלי
-│   ├── DATABASE_SCHEMA.md  # מודל נתונים
-│   ├── API_SPECIFICATION.md # מפרט API
-│   ├── UI_UX_DESIGN.md     # עיצוב UI/UX
-│   └── TECHNOLOGY_STACK.md # טכנולוגיות
-├── src/
-│   ├── backend/            # שרת Node.js
-│   └── frontend/           # אפליקציית React
-├── config/                 # קבצי הגדרות
-├── scripts/                # סקריפטים עזר
-└── README.md
-```
-
-## התחלה מהירה
-
-```bash
-# Clone
-git clone <repo-url>
-cd service-desk-zammad
-
-# בקרוב - הוראות התקנה מלאות
-```
 
 ## רישיון
 
