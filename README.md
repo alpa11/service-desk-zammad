@@ -1,2 +1,84 @@
-# service-desk-zammad
-Service desk system based on Zammad – installation, configuration and documentation
+# מערכת ניהול קריאות תחזוקה
+
+מערכת קלה ונעימה לניהול קריאות תחזוקה - פשוטה כמו To-Do, מקצועית כמו Helpdesk.
+
+## תכונות עיקריות
+
+- **פתיחת קריאה פשוטה** - מזכירות פותחות קריאה ב-3 קליקים
+- **שיוך אוטומטי** - הקריאה מוקצית אוטומטית לאב הבית הנכון לפי הסניף
+- **טיפול מהיר** - אב הבית משנה סטטוס ומעלה תמונת "בוצע"
+- **דשבורד מנהל** - צפייה בכל הקריאות, סטטיסטיקות ודוחות
+- **ללא התכתבויות** - המערכת עובדת על סטטוסים בלבד
+
+## עקרונות מנחים
+
+- מינימום קליקים
+- מינימום שדות
+- אפס בלבול למשתמשים
+- To-Do קודם ל-Helpdesk
+
+## מסמכי אפיון
+
+| מסמך | תיאור |
+|------|-------|
+| [PRD.md](docs/PRD.md) | אפיון פונקציונלי מלא |
+| [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) | מודל הנתונים וטבלאות |
+| [API_SPECIFICATION.md](docs/API_SPECIFICATION.md) | מפרט ה-API |
+| [UI_UX_DESIGN.md](docs/UI_UX_DESIGN.md) | עיצוב ממשק המשתמש |
+| [TECHNOLOGY_STACK.md](docs/TECHNOLOGY_STACK.md) | בחירת טכנולוגיות |
+
+## סוגי משתמשים
+
+| תפקיד | תיאור | הרשאות עיקריות |
+|-------|-------|----------------|
+| מזכירה | פותחת קריאות | פתיחת קריאה, צפייה בקריאות שלה |
+| אב בית | מטפל ראשי | שינוי סטטוס, העלאת תמונה |
+| טכנאי | מטפל משני | כמו אב בית, תחת קבוצה |
+| מנהל | Admin | כל ההרשאות |
+
+## סטטוסים
+
+```
+פתוח  →  בטיפול  →  סגור
+```
+
+זה הכל. אין סטטוסים נוספים.
+
+## טכנולוגיות מומלצות
+
+- **Frontend:** React + Vite + Tailwind CSS
+- **Backend:** Node.js + Express + TypeScript
+- **Database:** PostgreSQL
+- **Deploy:** Docker Compose
+
+## מבנה הפרויקט
+
+```
+service-desk-zammad/
+├── docs/                    # מסמכי אפיון
+│   ├── PRD.md              # אפיון פונקציונלי
+│   ├── DATABASE_SCHEMA.md  # מודל נתונים
+│   ├── API_SPECIFICATION.md # מפרט API
+│   ├── UI_UX_DESIGN.md     # עיצוב UI/UX
+│   └── TECHNOLOGY_STACK.md # טכנולוגיות
+├── src/
+│   ├── backend/            # שרת Node.js
+│   └── frontend/           # אפליקציית React
+├── config/                 # קבצי הגדרות
+├── scripts/                # סקריפטים עזר
+└── README.md
+```
+
+## התחלה מהירה
+
+```bash
+# Clone
+git clone <repo-url>
+cd service-desk-zammad
+
+# בקרוב - הוראות התקנה מלאות
+```
+
+## רישיון
+
+MIT License - קוד פתוח וחינמי לשימוש.
