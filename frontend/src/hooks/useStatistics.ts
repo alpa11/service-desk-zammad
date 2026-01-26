@@ -13,9 +13,10 @@ export const useStatistics = (filters: {
   });
 };
 
-export const useMyDashboard = () => {
+export const useMyDashboard = (options: { enabled?: boolean } = {}) => {
   return useQuery({
     queryKey: ['myDashboard'],
     queryFn: () => statisticsApi.getMyDashboard(),
+    enabled: options.enabled,
   });
 };

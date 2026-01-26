@@ -29,14 +29,13 @@ const StatCard: React.FC<{
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const isSecretary = user?.role === 'secretary';
+  const isHousekeeper = user?.role === 'housekeeper' || user?.role === 'technician';
   const { data: ticketsData, isLoading: ticketsLoading } = useTickets({
     status: user?.role === 'secretary' ? undefined : 'open',
     per_page: 6,
   });
-  const { data: dashboardData } = useMyDashboard();
-
-  const isSecretary = user?.role === 'secretary';
-  const isHousekeeper = user?.role === 'housekeeper' || user?.role === 'technician';
+  const { data: dashboardData } = useMyDashboard({ enabled: isHousekeeper });
 
   return (
     <div className="space-y-6">
