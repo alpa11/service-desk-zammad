@@ -32,70 +32,70 @@ export const statisticsService = {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Get totals
-    const totalsResult = await query(
-      `SELECT
-        COUNT(*) as total,
-        COUNT(*) FILTER (WHERE status = 'open') as open,
-        COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress,
-        COUNT(*) FILTER (WHERE status = 'closed') as closed,
-        COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) as created_today,
-        COUNT(*) FILTER (WHERE DATE(closed_at) = CURRENT_DATE) as closed_today,
-        COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)) as created_this_week,
-        COUNT(*) FILTER (WHERE closed_at >= DATE_TRUNC('week', CURRENT_DATE)) as closed_this_week,
-        COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)) as created_this_month,
-        COUNT(*) FILTER (WHERE closed_at >= DATE_TRUNC('month', CURRENT_DATE)) as closed_this_month,
-        AVG(EXTRACT(EPOCH FROM (closed_at - created_at)) / 3600) FILTER (WHERE closed_at IS NOT NULL) as avg_handling_time
-      FROM tickets t
-      ${whereClause}`,
-      params
-    );
+    // Run all queries in parallel for better performance
+    const [totalsResult, byIssueTypeResult, byBranchResult, byHousekeeperResult] = await Promise.all([
+      // Get totals
+      query(
+        `SELECT
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE status = 'open') as open,
+          COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress,
+          COUNT(*) FILTER (WHERE status = 'closed') as closed,
+          COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) as created_today,
+          COUNT(*) FILTER (WHERE DATE(closed_at) = CURRENT_DATE) as closed_today,
+          COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('week', CURRENT_DATE)) as created_this_week,
+          COUNT(*) FILTER (WHERE closed_at >= DATE_TRUNC('week', CURRENT_DATE)) as closed_this_week,
+          COUNT(*) FILTER (WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)) as created_this_month,
+          COUNT(*) FILTER (WHERE closed_at >= DATE_TRUNC('month', CURRENT_DATE)) as closed_this_month,
+          AVG(EXTRACT(EPOCH FROM (closed_at - created_at)) / 3600) FILTER (WHERE closed_at IS NOT NULL) as avg_handling_time
+        FROM tickets t
+        ${whereClause}`,
+        params
+      ),
+      // Get by issue type
+      query(
+        `SELECT
+          it.name as issue_type,
+          COUNT(*) as count
+        FROM tickets t
+        JOIN issue_types it ON t.issue_type_id = it.id
+        ${whereClause}
+        GROUP BY it.id, it.name
+        ORDER BY count DESC`,
+        params
+      ),
+      // Get by branch
+      query(
+        `SELECT
+          b.name as branch,
+          COUNT(*) FILTER (WHERE t.status = 'open') as open,
+          COUNT(*) FILTER (WHERE t.status = 'in_progress') as in_progress,
+          COUNT(*) FILTER (WHERE t.status = 'closed') as closed
+        FROM tickets t
+        JOIN branches b ON t.branch_id = b.id
+        ${whereClause}
+        GROUP BY b.id, b.name
+        ORDER BY b.name`,
+        params
+      ),
+      // Get by housekeeper
+      query(
+        `SELECT
+          u.first_name || ' ' || u.last_name as housekeeper,
+          COUNT(*) FILTER (WHERE t.status = 'open') as open,
+          COUNT(*) FILTER (WHERE t.status = 'in_progress') as in_progress,
+          COUNT(*) FILTER (WHERE t.status = 'closed') as closed,
+          AVG(EXTRACT(EPOCH FROM (t.closed_at - t.created_at)) / 3600) FILTER (WHERE t.closed_at IS NOT NULL) as avg_handling_time
+        FROM tickets t
+        JOIN users u ON t.housekeeper_id = u.id
+        ${whereClause}
+        GROUP BY u.id, u.first_name, u.last_name
+        ORDER BY open DESC`,
+        params
+      ),
+    ]);
 
     const totals = totalsResult.rows[0];
-
-    // Get by issue type
-    const byIssueTypeResult = await query(
-      `SELECT
-        it.name as issue_type,
-        COUNT(*) as count
-      FROM tickets t
-      JOIN issue_types it ON t.issue_type_id = it.id
-      ${whereClause}
-      GROUP BY it.id, it.name
-      ORDER BY count DESC`,
-      params
-    );
-
-    // Get by branch
-    const byBranchResult = await query(
-      `SELECT
-        b.name as branch,
-        COUNT(*) FILTER (WHERE t.status = 'open') as open,
-        COUNT(*) FILTER (WHERE t.status = 'in_progress') as in_progress,
-        COUNT(*) FILTER (WHERE t.status = 'closed') as closed
-      FROM tickets t
-      JOIN branches b ON t.branch_id = b.id
-      ${whereClause}
-      GROUP BY b.id, b.name
-      ORDER BY b.name`,
-      params
-    );
-
-    // Get by housekeeper
-    const byHousekeeperResult = await query(
-      `SELECT
-        u.first_name || ' ' || u.last_name as housekeeper,
-        COUNT(*) FILTER (WHERE t.status = 'open') as open,
-        COUNT(*) FILTER (WHERE t.status = 'in_progress') as in_progress,
-        COUNT(*) FILTER (WHERE t.status = 'closed') as closed,
-        AVG(EXTRACT(EPOCH FROM (t.closed_at - t.created_at)) / 3600) FILTER (WHERE t.closed_at IS NOT NULL) as avg_handling_time
-      FROM tickets t
-      JOIN users u ON t.housekeeper_id = u.id
-      ${whereClause}
-      GROUP BY u.id, u.first_name, u.last_name
-      ORDER BY open DESC`,
-      params
-    );
 
     return {
       totals: {

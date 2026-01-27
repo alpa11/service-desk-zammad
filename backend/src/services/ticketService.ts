@@ -259,10 +259,19 @@ export const ticketService = {
     const housekeeperId = branchResult.rows[0].housekeeper_id;
 
     const result = await query(
-      `INSERT INTO tickets (branch_id, issue_type_id, description, floor, building, wing, room,
-                            status, created_by, housekeeper_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'open', $8, $9)
-       RETURNING *`,
+      `WITH inserted AS (
+        INSERT INTO tickets (branch_id, issue_type_id, description, floor, building, wing, room,
+                              status, created_by, housekeeper_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'open', $8, $9)
+        RETURNING *
+      )
+      SELECT
+        i.id, i.description, i.status, i.created_at,
+        b.name as branch_name, b.code as branch_code,
+        hk.first_name || ' ' || hk.last_name as housekeeper_name
+      FROM inserted i
+      JOIN branches b ON i.branch_id = b.id
+      JOIN users hk ON i.housekeeper_id = hk.id`,
       [
         data.branch_id,
         data.issue_type_id,
@@ -276,22 +285,7 @@ export const ticketService = {
       ]
     );
 
-    const ticket = result.rows[0];
-
-    // Get additional info for response
-    const fullTicket = await query(
-      `SELECT
-        t.id, t.description, t.status, t.created_at,
-        b.name as branch_name, b.code as branch_code,
-        hk.first_name || ' ' || hk.last_name as housekeeper_name
-      FROM tickets t
-      JOIN branches b ON t.branch_id = b.id
-      JOIN users hk ON t.housekeeper_id = hk.id
-      WHERE t.id = $1`,
-      [ticket.id]
-    );
-
-    const row = fullTicket.rows[0];
+    const row = result.rows[0];
 
     return {
       id: row.id,
@@ -359,14 +353,10 @@ export const ticketService = {
 
     params.push(ticketId);
 
-    await query(
-      `UPDATE tickets SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`,
-      params
-    );
-
     const updatedTicket = await query(
-      'SELECT id, status, updated_at FROM tickets WHERE id = $1',
-      [ticketId]
+      `UPDATE tickets SET ${updateFields.join(', ')} WHERE id = $${paramIndex}
+       RETURNING id, status, updated_at`,
+      params
     );
 
     return {
@@ -412,18 +402,20 @@ export const ticketService = {
     userId: number
   ) {
     const result = await query(
-      `INSERT INTO ticket_photos (ticket_id, file_path, file_name, file_size, mime_type, uploaded_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
+      `WITH inserted AS (
+        INSERT INTO ticket_photos (ticket_id, file_path, file_name, file_size, mime_type, uploaded_by)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      )
+      SELECT
+        i.*,
+        u.first_name || ' ' || u.last_name as uploader_name
+      FROM inserted i
+      JOIN users u ON i.uploaded_by = u.id`,
       [ticketId, filePath, fileName, fileSize, mimeType, userId]
     );
 
     const photo = result.rows[0];
-
-    const userResult = await query(
-      "SELECT first_name || ' ' || last_name as name FROM users WHERE id = $1",
-      [userId]
-    );
 
     return {
       id: photo.id,
@@ -433,7 +425,7 @@ export const ticketService = {
       uploaded_at: photo.uploaded_at,
       uploaded_by: {
         id: userId,
-        name: userResult.rows[0].name,
+        name: photo.uploader_name,
       },
     };
   },

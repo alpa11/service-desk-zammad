@@ -1,8 +1,8 @@
 import { query } from '../config/database';
-import { UserRole } from '../types';
+import { UserRole, PaginationParams } from '../types';
 import { AppError } from '../middleware/errorHandler';
 import { authService } from './authService';
-import { roleDisplayNames } from '../utils/helpers';
+import { roleDisplayNames, getOffset } from '../utils/helpers';
 
 interface CreateUserData {
   email: string;
@@ -23,12 +23,15 @@ interface UpdateUserData {
 }
 
 export const userService = {
-  async getUsers(filters: {
-    role?: UserRole;
-    active?: boolean;
-    group_id?: number;
-    search?: string;
-  }) {
+  async getUsers(
+    filters: {
+      role?: UserRole;
+      active?: boolean;
+      group_id?: number;
+      search?: string;
+    },
+    pagination: PaginationParams
+  ) {
     const conditions: string[] = [];
     const params: unknown[] = [];
     let paramIndex = 1;
@@ -55,21 +58,49 @@ export const userService = {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+    // Count total users
+    const countResult = await query(
+      `SELECT COUNT(*) FROM users u ${whereClause}`,
+      params
+    );
+    const totalItems = parseInt(countResult.rows[0].count, 10);
+
+    // Get paginated results
+    const offset = getOffset(pagination);
+    params.push(pagination.per_page, offset);
+
     const result = await query(
       `SELECT
         u.id, u.email, u.first_name, u.last_name, u.role, u.group_id, u.active, u.created_at,
         g.name as group_name,
-        (SELECT COUNT(*) FROM branches b WHERE b.housekeeper_id = u.id) as branches_count,
-        (SELECT COUNT(*) FROM tickets t WHERE t.created_by = u.id) as tickets_created,
-        (SELECT COUNT(*) FROM tickets t WHERE t.housekeeper_id = u.id AND t.status = 'open') as open_tickets
+        COALESCE(bc.branches_count, 0) as branches_count,
+        COALESCE(tc.tickets_created, 0) as tickets_created,
+        COALESCE(ot.open_tickets, 0) as open_tickets
       FROM users u
       LEFT JOIN groups g ON u.group_id = g.id
+      LEFT JOIN (
+        SELECT housekeeper_id, COUNT(*) as branches_count
+        FROM branches
+        GROUP BY housekeeper_id
+      ) bc ON bc.housekeeper_id = u.id
+      LEFT JOIN (
+        SELECT created_by, COUNT(*) as tickets_created
+        FROM tickets
+        GROUP BY created_by
+      ) tc ON tc.created_by = u.id
+      LEFT JOIN (
+        SELECT housekeeper_id, COUNT(*) as open_tickets
+        FROM tickets
+        WHERE status = 'open'
+        GROUP BY housekeeper_id
+      ) ot ON ot.housekeeper_id = u.id
       ${whereClause}
-      ORDER BY u.first_name, u.last_name`,
+      ORDER BY u.first_name, u.last_name
+      LIMIT $${paramIndex++} OFFSET $${paramIndex}`,
       params
     );
 
-    return result.rows.map((row) => ({
+    const users = result.rows.map((row) => ({
       id: row.id,
       email: row.email,
       first_name: row.first_name,
@@ -89,6 +120,16 @@ export const userService = {
       tickets_created: parseInt(row.tickets_created, 10),
       open_tickets: parseInt(row.open_tickets, 10),
     }));
+
+    return {
+      users,
+      pagination: {
+        current_page: pagination.page,
+        per_page: pagination.per_page,
+        total_pages: Math.ceil(totalItems / pagination.per_page),
+        total_items: totalItems,
+      },
+    };
   },
 
   async getUserById(userId: number) {

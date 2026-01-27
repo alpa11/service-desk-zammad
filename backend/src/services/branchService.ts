@@ -39,9 +39,15 @@ export const branchService = {
       `SELECT
         b.*,
         u.first_name || ' ' || u.last_name as housekeeper_name,
-        (SELECT COUNT(*) FROM tickets t WHERE t.branch_id = b.id AND t.status = 'open') as open_tickets
+        COALESCE(ot.open_tickets, 0) as open_tickets
       FROM branches b
       JOIN users u ON b.housekeeper_id = u.id
+      LEFT JOIN (
+        SELECT branch_id, COUNT(*) as open_tickets
+        FROM tickets
+        WHERE status = 'open'
+        GROUP BY branch_id
+      ) ot ON ot.branch_id = b.id
       ${whereClause}
       ORDER BY b.name`,
       params
