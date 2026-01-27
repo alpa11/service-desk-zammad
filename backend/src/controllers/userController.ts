@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { userService } from '../services/userService';
 import { authService } from '../services/authService';
 import { UserRole } from '../types';
+import { parsePagination } from '../utils/helpers';
 
 export const userController = {
   async getUsers(req: Request, res: Response, next: NextFunction) {
@@ -13,11 +14,17 @@ export const userController = {
         search: req.query.search as string | undefined,
       };
 
-      const users = await userService.getUsers(filters);
+      const pagination = parsePagination(
+        req.query.page as string | undefined,
+        req.query.per_page as string | undefined
+      );
+
+      const result = await userService.getUsers(filters, pagination);
 
       res.json({
         success: true,
-        data: users,
+        data: result.users,
+        pagination: result.pagination,
       });
     } catch (error) {
       next(error);
