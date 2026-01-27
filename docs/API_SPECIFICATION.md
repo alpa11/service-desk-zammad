@@ -847,7 +847,7 @@ GET /statistics
 GET /statistics/my-dashboard
 ```
 
-**הרשאות:** אב בית / טכנאי
+**הרשאות:** אב בית / טכנאי / מנהל
 
 **Response (200):**
 ```json
