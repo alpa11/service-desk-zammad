@@ -9,10 +9,10 @@ router.use(authenticate);
 // Get overall statistics (admin only)
 router.get('/', authorize('admin'), statisticsController.getStatistics);
 
-// Get personal dashboard (housekeeper, technician)
+// Get personal dashboard (all authenticated users)
 router.get(
   '/my-dashboard',
-  authorize('housekeeper', 'technician', 'admin'),
+  authorize('admin', 'secretary', 'housekeeper', 'technician'),
   statisticsController.getMyDashboard
 );
 
