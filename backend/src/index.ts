@@ -22,8 +22,29 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(helmet());
+const configuredOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const defaultOrigins = [
+  'http://localhost',
+  'http://localhost:5173',
+  'http://127.0.0.1',
+  'http://127.0.0.1:8086',
+];
+
+const allowedOrigins = configuredOrigins.length > 0 ? configuredOrigins : defaultOrigins;
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json());
