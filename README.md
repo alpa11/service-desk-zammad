@@ -63,6 +63,20 @@ npm run dev
 | yaakov@example.com | Test1234! | אב בית |
 | sarah@example.com | Test1234! | מזכירה |
 
+## פריסה ל-Production (Firebase)
+
+### למה Preview עובד ו-Production לא?
+
+- **Preview** נבנה ב־GitHub Actions עם משתני `VITE_FIREBASE_*` מה־Secrets.
+- **Production** יכשל אם מריצים `firebase deploy` ידנית בלי ENV בזמן ה־build, והתוצאה תהיה `auth/invalid-api-key`.
+
+> תצורת Firebase מגיעה מ־`VITE_FIREBASE_*` בזמן ה־build בלבד.
+
+### מה לעשות
+
+- לפרוס Production רק דרך GitHub Actions (Merge ל־`main`).
+- לא לבצע `firebase deploy` ידני בלי ENV בזמן build.
+
 ## מבנה הפרויקט
 
 ```
