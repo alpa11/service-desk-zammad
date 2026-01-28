@@ -63,6 +63,39 @@ npm run dev
 | yaakov@example.com | Test1234! | אב בית |
 | sarah@example.com | Test1234! | מזכירה |
 
+## פריסה ל-Production (Firebase)
+
+### למה Preview עובד ו-Production לא?
+
+- **Preview** נבנה ב־GitHub Actions עם משתני `VITE_FIREBASE_*` מה־Secrets.
+- **Production** יכשל אם מריצים `firebase deploy` ידנית בלי ENV בזמן ה־build, והתוצאה תהיה `auth/invalid-api-key`.
+
+> תצורת Firebase מגיעה מ־`VITE_FIREBASE_*` בזמן ה־build בלבד.
+
+### מה לעשות
+
+- לפרוס Production רק דרך GitHub Actions (Merge ל־`main`).
+- לא לבצע `firebase deploy` ידני בלי ENV בזמן build.
+
+## פריסה לשרת דרך GitHub Actions (SSH)
+
+ה־Workflow `Deploy to Server` משתמש ב־`appleboy/ssh-action` ומצפה לסודות הבאים:
+
+- `SSH_HOST`
+- `SSH_USER`
+- `SSH_KEY`
+- `APP_DIR`
+
+### תקלת `ssh: unable to authenticate`
+
+אם ב־Actions מתקבלת השגיאה:
+
+```
+ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain
+```
+
+בדקו ש־`SSH_KEY` מכיל מפתח פרטי מלא (כולל `-----BEGIN`/`-----END`) ושהוא תואם למפתח הציבורי שמוגדר בשרת עבור המשתמש שב־`SSH_USER`.
+
 ## מבנה הפרויקט
 
 ```
